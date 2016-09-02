@@ -47,16 +47,11 @@ class RhevCredentialsForm(BaseResourceHandlerCredentialsForm):
             api_url = RhevResourceHandler.get_api_url(protocol, ip, port)
             cert_filename = RhevResourceHandler.get_cert_filename(ip, port)
 
-            # download the cert file
-            try:
-                if not os.path.exists(RhevResourceHandler.cert_directory):
-                    os.makedirs(RhevResourceHandler.cert_directory)
-                response = requests.get(api_url + "/ca.crt", verify=False)
-                with open(cert_filename, "w") as f:
-                    f.write(response.text)
-            except requests.RequestException:
-                raise CloudBoltException(
-                    "Could not obtain SSL certificate from {0}".format(ip))
+            # Locate the cert file
+            if not os.path.exists(cert_filename):
+                raise forms.ValidationError("CA certificate for "
+                                            "{0} does not exist. ({1})".format(ip,
+                                              cert_filename))
 
             try:
                 ovirtsdk.api.API(
