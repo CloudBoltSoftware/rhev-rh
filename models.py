@@ -79,7 +79,7 @@ class RhevResourceHandler(ResourceHandler):
 
     @classmethod
     def get_api_url(cls, protocol, ip, port):
-        return "{0}://{1}:{2}".format(protocol, ip, port)
+        return "{0}://{1}:{2}/api".format(protocol, ip, port)
 
     @classmethod
     def get_cert_filename(cls, ip, port):
@@ -276,7 +276,7 @@ class RhevResourceHandler(ResourceHandler):
                 name=server.get_vm_name(),
                 cpu=ovirtsdk.xml.params.CPU(topology=cpu_topology),
                 memory=server.mem_size * ONE_GIG,
-                display=ovirtsdk.xml.params.Display(type_="vnc"),
+                display=ovirtsdk.xml.params.Display(type_="spice"),
                 cluster=cluster,
                 template=template,
             )
