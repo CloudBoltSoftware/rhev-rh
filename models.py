@@ -23,14 +23,17 @@ ONE_GIG = 2 ** 30
 
 
 class RhevNetwork(ResourceNetwork):
-
     """
-    TODO
+    Represents a RHEV network, extending the base ResourceNetwork class
     """
     uuid = models.CharField(max_length=36, default="")
 
 
 class RhevOSBuildAttribute(OSBuildAttribute):
+    """
+    Extends the base OSBuildAttribute class to represent the details of
+    templates in RHEV
+    """
     template_name = models.CharField(max_length=100)
     uuid = models.CharField(max_length=100)
 
@@ -45,7 +48,6 @@ class RhevOSBuildAttribute(OSBuildAttribute):
 
 
 class RhevResourceHandler(ResourceHandler):
-
     """
     This class extends the ResourceHandler class to include
     elements specific to RHEV's Cloud Platform
@@ -54,10 +56,8 @@ class RhevResourceHandler(ResourceHandler):
 
     clusterName = models.CharField(max_length=100, default="")
     can_sync_vms = True
-    networks = models.ManyToManyField(RhevNetwork, blank=True, null=True)
-    os_build_attributes = models.ManyToManyField(RhevOSBuildAttribute,
-                                                 null=True,
-                                                 blank=True)
+    networks = models.ManyToManyField(RhevNetwork, blank=True)
+    os_build_attributes = models.ManyToManyField(RhevOSBuildAttribute, blank=True)
     type_name = "RHEV"
 
     _api = []
@@ -79,7 +79,7 @@ class RhevResourceHandler(ResourceHandler):
 
     @classmethod
     def get_api_url(cls, protocol, ip, port):
-        return "{0}://{1}:{2}/api".format(protocol, ip, port)
+        return "{0}://{1}:{2}".format(protocol, ip, port)
 
     @classmethod
     def get_cert_filename(cls, ip, port):
@@ -92,7 +92,7 @@ class RhevResourceHandler(ResourceHandler):
 
     def poweron_resource(self, resource_id, pxe=None):
         """
-        TODO
+        Powers on the server specified by resource_id
         """
         server = Server.objects.get(id=resource_id)
         try:
@@ -106,7 +106,7 @@ class RhevResourceHandler(ResourceHandler):
 
     def poweroff_resource(self, resource_id):
         """
-        TODO
+        Powers off the server specified by resource_id
         """
         server = Server.objects.get(id=resource_id)
         if not server.resource_handler_svr_id:
@@ -141,7 +141,10 @@ class RhevResourceHandler(ResourceHandler):
 
     def add_nics_to_server(self, resource_id, delete_first=True):
         """
-        TODO
+        Adds NICs to the server specified by resource_id.
+
+        `delete_first`: Indicates that any NICs already associated with the
+        server should be removed before new ones are added
         """
         server = Server.objects.get(id=resource_id)
 
@@ -227,7 +230,8 @@ class RhevResourceHandler(ResourceHandler):
 
     def create_resource(self, resource_id, use_template):
         """
-        TODO
+        Provisions a new VM using the information provided by the server
+        specified by resource_id
         """
         server = Server.objects.get(id=resource_id)
         logger.info("creating new vm {0}".format(server.hostname))
@@ -272,7 +276,7 @@ class RhevResourceHandler(ResourceHandler):
                 name=server.get_vm_name(),
                 cpu=ovirtsdk.xml.params.CPU(topology=cpu_topology),
                 memory=server.mem_size * ONE_GIG,
-                display=ovirtsdk.xml.params.Display(type_="spice"),
+                display=ovirtsdk.xml.params.Display(type_="vnc"),
                 cluster=cluster,
                 template=template,
             )
@@ -290,9 +294,6 @@ class RhevResourceHandler(ResourceHandler):
             logger.info(message)
             raise CloudBoltException(message)
 
-        # Used to return "this is a fake task id" which shows up on the job
-        # detail page. The string is found no where else in the code base,
-        # instead we will use the empty string
         return ""
 
     def delete_resource(self, resource_id):
@@ -305,7 +306,7 @@ class RhevResourceHandler(ResourceHandler):
         server = Server.objects.get(id=resource_id)
         if not server.resource_handler_svr_id:
             # in the case where prov failed badly, we need to avoid throwing an
-            # exception so that the server record can still be deleted from C2
+            # exception so that the server record can still be deleted from CB
             message = ("Could not delete server {0}: no "
                        "resource_handler_svr_id set".format(server.hostname))
             logger.info(message)
@@ -329,14 +330,15 @@ class RhevResourceHandler(ResourceHandler):
 
     def is_task_complete(self, resource_id, task_id):
         """
-        TODO
+        TODO: Implement a more sophisticated method for determining task
+        progress
         """
         return True, 100
 
     @staticmethod
     def get_credentials_form():
         """
-        TODO
+        Return the RHEV-specific credentials form
         """
         from .forms import RhevCredentialsForm
         return RhevCredentialsForm
@@ -344,19 +346,22 @@ class RhevResourceHandler(ResourceHandler):
     @staticmethod
     def get_settings_form():
         """
-        TODO
+        Return the RHEV-specific settings form
         """
         from .forms import RhevSettingsForm
         return RhevSettingsForm
 
     @staticmethod
     def get_quick_setup_settings_form(quick_setup=False):
+        """
+        Return the RHEV-specific Quick Setup form
+        """
         from .forms import RhevQuickSetupSettingsForm
         return RhevQuickSetupSettingsForm
 
     def get_all_vms(self):
         """
-        TODO
+        Queries RHEV for all its VMs and imports them into CloudBolt
         """
         logger.info("Connecting to RHEV to enumerate its VM list.")
 
@@ -403,6 +408,9 @@ class RhevResourceHandler(ResourceHandler):
         return all_vms
 
     def get_all_networks(self):
+        """
+        Queries RHEV for all its networks so they can be imported into CloudBolt
+        """
         all_nets = []
         net_objs = self.api.clusters.get(name=self.clusterName).networks.list()
         for net_obj in net_objs:
@@ -416,13 +424,24 @@ class RhevResourceHandler(ResourceHandler):
         return all_nets
 
     def add_network(self, **kwargs):
+        """
+        Adds a RhevNetwork to this RH, creating it if needed.
+        """
         network, created = RhevNetwork.objects.get_or_create(**kwargs)
         self.networks.add(network)
         return network, created
 
     def discover_templates(self):
         """
-        TODO
+        Finds the set of templates for the resource handler, for use in places
+        like the Import templates button
+
+        Returns a 3-tuple:
+            rhevm_templates[{}]    a list of dictionaries representing the
+            RHEV-specific template details for each template
+            not_in_cb[{}]       a list of templates that don't exist in CB
+            only_in_cb[osba]    a list of OSBuildAttributes that exist in CB but
+            no longer have equivalent templates on RHEV
         """
         all_templates = self.api.templates.list(query=self.cluster_query)
         dictify = lambda t: dict(name=t.name, uuid=t.id, description=t.os.type_)
