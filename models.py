@@ -116,13 +116,31 @@ class RhevResourceHandler(ResourceHandler):
                        "resource_handler_svr_id set")
             logger.info(message.format(server.hostname))
             return False
+
         try:
             vm = self.api.vms.get(id=server.resource_handler_svr_id)
             vm.stop()
+
         except ovirtsdk.infrastructure.errors.RequestError as e:
             message = "Power off response for server {0}: {1}"
             logger.info(message.format(server.hostname, e.detail))
             return False
+
+        # Give it 2 minutes to shut down, continually checking the state.
+        is_up = True
+        t_end = time.time() + 120
+        while time.time() < t_end:
+             #  Continually refresh the object...
+             vm = self.api.vms.get(id=server.resource_handler_svr_id)
+             if vm.status.state == 'down':
+                  is_up = False
+                  break
+ 
+        if is_up:
+            message = "Host is not powered down after 2 minutes."
+            logger.info(message)
+            return False
+
         return True
 
     def configure_network(self, resource_id, job=None):
@@ -311,32 +329,20 @@ class RhevResourceHandler(ResourceHandler):
             logger.info(message)
             return FalseWithMessage(message)
 
-        self.poweroff_resource(resource_id)
-        message = ("Waiting for host to power down.")
-        logger.info(message)
-
-        # Give it 2 minutes to shut down, continually checking the state.
-        is_up = True
-        t_end = time.time() + 120
-        while time.time() < t_end:
-             #  Continually refresh the object...
-             vm = self.api.vms.get(id=server.resource_handler_svr_id)
-             if vm.status.state == 'down':
-                  is_up = False
-                  break
-
-        if is_up:
-            message = "Host is not powered down after 2 minutes."
+        if not self.poweroff_resource(resource_id):
+            message = "Unable to power down host."
             return FalseWithMessage(message)
 
         try:
             vm = self.api.vms.get(id=server.resource_handler_svr_id)
             vm.delete()
+
         except ovirtsdk.infrastructure.errors.RequestError as e:
             message = "Delete response for server {0}: {1}".format(
                 server.hostname, e.detail)
             logger.info(message)
             return FalseWithMessage(message)
+
         return TrueWithMessage("Deleted")
 
     def get_uuid(self, resource_id):
