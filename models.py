@@ -312,6 +312,23 @@ class RhevResourceHandler(ResourceHandler):
             return FalseWithMessage(message)
 
         self.poweroff_resource(resource_id)
+        message = ("Waiting for host to power down.")
+        logger.info(message)
+
+        # Give it 2 minutes to shut down, continually checking the state.
+        is_up = True
+        t_end = time.time() + 120
+        while time.time() < t_end:
+             #  Continually refresh the object...
+             vm = self.api.vms.get(id=server.resource_handler_svr_id)
+             if vm.status.state == 'down':
+                  is_up = False
+                  break
+
+        if is_up:
+            message = "Host is not powered down after 2 minutes."
+            return FalseWithMessage(message)
+
         try:
             vm = self.api.vms.get(id=server.resource_handler_svr_id)
             vm.delete()
