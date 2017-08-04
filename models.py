@@ -185,7 +185,7 @@ class RhevResourceHandler(ResourceHandler):
                     try:
                         nic_obj.delete()
                         break
-                    except ovirtsdk.infrastructure.errors.RequestError, e:
+                    except ovirtsdk.infrastructure.errors.RequestError as e:
                         message = "Waiting to delete NIC from server {0}.  Error: {1}"
                         logger.info(message.format(server.hostname, e))
                     tries -= 1
@@ -222,7 +222,7 @@ class RhevResourceHandler(ResourceHandler):
                         nic_obj.set_network(net_obj)
                     mac = nic_obj.mac.address
                     break
-                except ovirtsdk.infrastructure.errors.RequestError, e:
+                except ovirtsdk.infrastructure.errors.RequestError as e:
                     # This may catch more errors than we want
                     message = "Waiting to add nic to server {0}"
                     logger.info(message.format(server.hostname))
