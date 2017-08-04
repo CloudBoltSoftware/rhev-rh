@@ -1,4 +1,5 @@
 from __future__ import division
+from builtins import object
 
 import os
 import time
@@ -43,7 +44,7 @@ class RhevOSBuildAttribute(OSBuildAttribute):
     def __unicode__(self):
         return self.template_name
 
-    class Meta:
+    class Meta(object):
         verbose_name = "RHEV OS Build Attribute"
 
 
