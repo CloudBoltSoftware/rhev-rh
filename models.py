@@ -41,7 +41,7 @@ class RhevOSBuildAttribute(OSBuildAttribute):
     def get_resource_handler(self):
         return self.rhevresourcehandler_set.first()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.template_name
 
     class Meta(object):
