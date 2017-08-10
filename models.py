@@ -64,17 +64,26 @@ class RhevResourceHandler(ResourceHandler):
 
     @property
     def api(self):
+        # Immediately return the cached API instance if it exists
         if self._api:
-            api = self._api[0]
-        else:
-            api_url = self.get_api_url(self.protocol, self.ip, self.port)
-            cert_filename = self.get_cert_filename(self.ip, self.port)
-            api = ovirtsdk.api.API(url=api_url,
-                                   username=self.serviceaccount,
-                                   password=self.servicepasswd,
-                                   ca_file=cert_filename)
-            self._api.append(api)
+            return self._api[0]
 
+        api_kwargs = {
+            'url': self.get_api_url(self.protocol, self.ip, self.port),
+            'username': self.serviceaccount,
+            'password': self.servicepasswd,
+            'ca_file': self.get_cert_filename(self.ip, self.port),
+        }
+
+        """
+        Skip SSL cert validation if global SSL verification is disabled
+        """
+        should_verify_ssl = bool(self.get_ssl_verification())
+        if should_verify_ssl is False:
+            api_kwargs['validate_cert_chain'] = False
+
+        api = ovirtsdk.api.API(**api_kwargs)
+        self._api.append(api)
         return api
 
     @classmethod
