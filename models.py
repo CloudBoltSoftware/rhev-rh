@@ -44,7 +44,7 @@ class RhevOSBuildAttribute(OSBuildAttribute):
     def __str__(self):
         return self.template_name
 
-    class Meta(object):
+    class Meta(OSBuildAttribute.Meta):
         verbose_name = "RHEV OS Build Attribute"
 
 
