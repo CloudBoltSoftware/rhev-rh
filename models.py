@@ -100,6 +100,13 @@ class RhevResourceHandler(ResourceHandler):
         super(RhevResourceHandler, self).__init__(*args, **kwargs)
         self.cluster_query = 'cluster="{0}"'.format(self.clusterName)
 
+    def verify_connection(self):
+        """
+        Raise an exception if connection was NOT successful.
+        """
+        # This method is required on all RHs.  Currently this does nothing to verify the
+        # credentials or connetion to RHEV; however, forms.RhevCredentialsForm does.
+
     def poweron_resource(self, resource_id, pxe=None):
         """
         Powers on the server specified by resource_id
