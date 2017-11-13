@@ -1,10 +1,10 @@
 from __future__ import division
-from builtins import object
 
 import os
 import time
 
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from common.classes import TrueWithMessage, FalseWithMessage
 from externalcontent.models import OSBuildAttribute
@@ -30,6 +30,7 @@ class RhevNetwork(ResourceNetwork):
     uuid = models.CharField(max_length=36, default="")
 
 
+@python_2_unicode_compatible
 class RhevOSBuildAttribute(OSBuildAttribute):
     """
     Extends the base OSBuildAttribute class to represent the details of
@@ -147,12 +148,12 @@ class RhevResourceHandler(ResourceHandler):
         is_up = True
         t_end = time.time() + 120
         while time.time() < t_end:
-             #  Continually refresh the object...
-             vm = self.api.vms.get(id=server.resource_handler_svr_id)
-             if vm.status.state == 'down':
-                  is_up = False
-                  break
- 
+            #  Continually refresh the object...
+            vm = self.api.vms.get(id=server.resource_handler_svr_id)
+            if vm.status.state == 'down':
+                is_up = False
+                break
+
         if is_up:
             message = "Host is not powered down after 2 minutes."
             logger.info(message)
