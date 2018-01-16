@@ -14,9 +14,8 @@ from settings import VARDIR
 from utilities.exceptions import CloudBoltException
 from utilities.logger import ThreadLogger
 
-import ovirtsdk.api
-import ovirtsdk.infrastructure
-import ovirtsdk.xml
+import ovirtsdk4 as sdk
+import ovirtsdk4.types as types
 
 logger = ThreadLogger(__name__)
 
@@ -84,7 +83,7 @@ class RhevResourceHandler(ResourceHandler):
         if should_verify_ssl is False:
             api_kwargs['validate_cert_chain'] = False
 
-        api = ovirtsdk.api.API(**api_kwargs)
+        api = sdk.Connection(**api_kwargs)
         self._api.append(api)
         return api
 
@@ -114,9 +113,9 @@ class RhevResourceHandler(ResourceHandler):
         """
         server = Server.objects.get(id=resource_id)
         try:
-            vm = self.api.vms.get(id=server.resource_handler_svr_id)
+            vm = self.api.vms_service(id=server.resource_handler_svr_id)
             vm.start()
-        except ovirtsdk.infrastructure.errors.RequestError as e:
+        except Error as e:
             message = "Power on response for server {0}: {1}"
             logger.info(message.format(resource_id, e.detail))
             return False
@@ -139,7 +138,7 @@ class RhevResourceHandler(ResourceHandler):
             vm = self.api.vms.get(id=server.resource_handler_svr_id)
             vm.stop()
 
-        except ovirtsdk.infrastructure.errors.RequestError as e:
+        except sdk.Error as e:
             message = "Power off response for server {0}: {1}"
             logger.info(message.format(server.hostname, e.detail))
             return False
@@ -203,7 +202,7 @@ class RhevResourceHandler(ResourceHandler):
                     try:
                         nic_obj.delete()
                         break
-                    except ovirtsdk.infrastructure.errors.RequestError as e:
+                    except sdk.Error as e:
                         message = "Waiting to delete NIC from server {0}.  Error: {1}"
                         logger.info(message.format(server.hostname, e))
                     tries -= 1
@@ -227,20 +226,21 @@ class RhevResourceHandler(ResourceHandler):
                 try:
                     # Check to see if nic already exists, update the network if
                     # it does, create it if it doesn't
-                    if not nic_obj:
-                        params = ovirtsdk.xml.params.NIC(
-                            name=nic_name,
-                            interface="virtio",
-                            network=cluster_obj.networks.get(id=network.uuid),
-                            mac=ovirtsdk.xml.params.MAC(mac) if mac else None,
-                        )
-                        nic_obj = vm_obj.nics.add(params)
-                    else:
-                        net_obj = cluster_obj.networks.get(id=network.uuid),
-                        nic_obj.set_network(net_obj)
-                    mac = nic_obj.mac.address
+                    # if not nic_obj:
+                    #     params = types.HostNic(
+                    #         name=nic_name,
+                    #         interface="virtio",
+                    #         network=cluster_obj.networks.get(id=network.uuid),
+                    #         mac=types.MAC(mac) if mac else None,
+                    #     )
+                    #     nic_obj = vm_obj.nics.add(params)
+                    # else:
+                    #     net_obj = cluster_obj.networks.get(id=network.uuid),
+                    #     nic_obj.set_network(net_obj)
+                    # mac = nic_obj.mac.address
                     break
-                except ovirtsdk.infrastructure.errors.RequestError as e:
+                    # TODO: fix this with types.NicConfiguration?
+                except sdk.Error as e:
                     # This may catch more errors than we want
                     message = "Waiting to add nic to server {0}"
                     logger.info(message.format(server.hostname))
@@ -304,27 +304,27 @@ class RhevResourceHandler(ResourceHandler):
             raise CloudBoltException(message)
 
         try:
-            cpu_topology = ovirtsdk.xml.params.CpuTopology(
+            cpu_topology = types.CpuTopology(
                 cores=1,
                 sockets=server.cpu_cnt,
             )
             temp = dict(
                 name=server.get_vm_name(),
-                cpu=ovirtsdk.xml.params.CPU(topology=cpu_topology),
+                cpu=types.CPU(topology=cpu_topology),
                 memory=server.mem_size * ONE_GIG,
-                display=ovirtsdk.xml.params.Display(type_="spice"),
+                display=types.Display(type_="spice"),
                 cluster=cluster,
                 template=template,
             )
             logger.info("sending: {0}".format(temp))
-            params = ovirtsdk.xml.params.VM(**temp)
+            params = types.VM(**temp)
             new_vm = self.api.vms.add(vm=params)
             uuid = new_vm.id
             logger.info("new vm uuid: {0}".format(uuid))
 
             server.resource_handler_svr_id = uuid
             server.save()
-        except ovirtsdk.infrastructure.errors.RequestError as e:
+        except sdk.Error as e:
             message = ("Create resource response for server {0}: {1}"
                        .format(server.hostname, e.detail))
             logger.info(message)
@@ -356,7 +356,7 @@ class RhevResourceHandler(ResourceHandler):
             vm = self.api.vms.get(id=server.resource_handler_svr_id)
             vm.delete()
 
-        except ovirtsdk.infrastructure.errors.RequestError as e:
+        except sdk.Error as e:
             message = "Delete response for server {0}: {1}".format(
                 server.hostname, e.detail)
             logger.info(message)

@@ -1,7 +1,7 @@
 from builtins import object
-import ovirtsdk.api
-import ovirtsdk.infrastructure
-import ovirtsdk.xml
+import ovirtsdk4.api
+import ovirtsdk4.infrastructure
+import ovirtsdk4.xml
 
 
 class TechnologyWrapper(object):

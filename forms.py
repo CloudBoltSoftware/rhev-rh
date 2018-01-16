@@ -10,14 +10,7 @@ from resourcehandlers.forms import (
 from .models import RhevResourceHandler
 from infrastructure.models import Environment
 
-import ovirtsdk.api
-import ovirtsdk.infrastructure
-from ovirtsdk.infrastructure.errors import (
-    RequestError,
-    ConnectionError,
-    UnsecuredConnectionAttemptError,
-)
-import ovirtsdk.xml
+from ovirtsdk4 import AuthError, ConnectionError, Error
 
 
 class RhevCredentialsForm(BaseResourceHandlerCredentialsForm):
@@ -54,13 +47,13 @@ class RhevCredentialsForm(BaseResourceHandlerCredentialsForm):
                                               cert_filename))
 
             try:
-                ovirtsdk.api.API(
+                RhevResourceHandler(
                     url=api_url,
                     username=serviceaccount,
                     password=servicepasswd,
                     ca_file=cert_filename)
-            except (RequestError, ConnectionError,
-                    UnsecuredConnectionAttemptError):
+            except (Error, ConnectionError,
+                    AuthError):
                 raise forms.ValidationError("Unable to connect to RHEV-M with"
                                             " the information provided.")
 
