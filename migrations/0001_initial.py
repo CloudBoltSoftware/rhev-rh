@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name='RhevNetwork',
             fields=[
                 ('resourcenetwork_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='resourcehandlers.ResourceNetwork')),
-                ('uuid', models.CharField(default=b'', max_length=36)),
+                ('uuid', models.CharField(default='', max_length=36)),
             ],
             options={
                 'abstract': False,
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             name='RhevResourceHandler',
             fields=[
                 ('resourcehandler_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='resourcehandlers.ResourceHandler')),
-                ('clusterName', models.CharField(default=b'', max_length=100)),
+                ('clusterName', models.CharField(default='', max_length=100)),
                 ('networks', models.ManyToManyField(to='rhev.RhevNetwork', null=True, blank=True)),
                 ('os_build_attributes', models.ManyToManyField(to='rhev.RhevOSBuildAttribute', null=True, blank=True)),
             ],
