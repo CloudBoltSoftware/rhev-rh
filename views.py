@@ -11,7 +11,7 @@ def get_detail_tabs(handler, profile):
     tabs = get_basic_tabs(handler, profile)
 
     rh_envs = handler.environment_set.all().order_by('name')
-    templates = handler.os_build_attributes.exclude(template_name=None)
+    templates = handler.osbuildattribute_set.exclude(template_name=None)
 
     for template in templates:
         if template.os_build:

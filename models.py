@@ -58,7 +58,7 @@ class RhevResourceHandler(ResourceHandler):
     clusterName = models.CharField(max_length=100, default="")
     can_sync_vms = True
     networks = models.ManyToManyField(RhevNetwork, blank=True)
-    os_build_attributes = models.ManyToManyField(RhevOSBuildAttribute, blank=True)
+    old_os_build_attributes = models.ManyToManyField(RhevOSBuildAttribute, blank=True)
     type_name = "RHEV"
 
     _api = []
@@ -272,7 +272,7 @@ class RhevResourceHandler(ResourceHandler):
         server = Server.objects.get(id=resource_id)
         logger.info("creating new vm {0}".format(server.hostname))
 
-        os_attributes = self.os_build_attributes.filter(
+        os_attributes = self.osbuildattribute_set.filter(
             os_build=server.os_build)
         template_name = os_attributes[0].cast().template_name
 
@@ -489,7 +489,7 @@ class RhevResourceHandler(ResourceHandler):
         rhevm_templates = [dictify(t) for t in all_templates]
         rhevm_uuids = set(t.id for t in all_templates)
 
-        all_osba = self.os_build_attributes.all()
+        all_osba = self.osbuildattribute_set.all()
         cb_uuids = set(osba.uuid for osba in all_osba)
 
         not_in_cb = [t for t in rhevm_templates if t["uuid"] not in cb_uuids]
@@ -509,7 +509,7 @@ class RhevResourceHandler(ResourceHandler):
         osbuild_attribute, created = RhevOSBuildAttribute.objects.get_or_create(
             os_build=os_build, template_name=template_name,
             uuid=kwargs.get("uuid", ""))
-        self.os_build_attributes.add(osbuild_attribute)
+        self.osbuildattribute_set.add(osbuild_attribute)
         return created
 
     def get_extra_details_tech(self):
