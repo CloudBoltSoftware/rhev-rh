@@ -35,7 +35,7 @@ class RhevOSBuildAttribute(OSBuildAttribute):
     Extends the base OSBuildAttribute class to represent the details of
     templates in RHEV
     """
-    template_name = models.CharField(max_length=100)
+    old_template_name = models.CharField(max_length=100)
     uuid = models.CharField(max_length=100)
 
     def get_resource_handler(self):
