@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('rhev', '0003_auto_20180503_0036'),
+        ('externalcontent', '0010_copy_template_name_to_osba_20180503_1658')
     ]
 
     operations = [
