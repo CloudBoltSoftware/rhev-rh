@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('rhev', '0002_auto_20161004_2121'),
+        ('externalcontent', '0007_add_osbas_to_base_field_20180501_2319')
     ]
 
     operations = [
