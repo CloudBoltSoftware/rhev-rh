@@ -38,9 +38,6 @@ class RhevOSBuildAttribute(OSBuildAttribute):
     old_template_name = models.CharField(max_length=100)
     uuid = models.CharField(max_length=100)
 
-    def get_resource_handler(self):
-        return self.rhevresourcehandler_set.first()
-
     def __str__(self):
         return self.template_name
 
