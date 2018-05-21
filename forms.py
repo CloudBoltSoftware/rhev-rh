@@ -10,7 +10,7 @@ from resourcehandlers.forms import (
 from .models import RhevResourceHandler
 from infrastructure.models import Environment
 
-from ovirtsdk4 import AuthError, ConnectionError, Error
+from ovirtsdk4 import Connection, AuthError, ConnectionError, Error
 
 
 class RhevCredentialsForm(BaseResourceHandlerCredentialsForm):
@@ -47,7 +47,7 @@ class RhevCredentialsForm(BaseResourceHandlerCredentialsForm):
                                               cert_filename))
 
             try:
-                RhevResourceHandler(
+                Connection(
                     url=api_url,
                     username=serviceaccount,
                     password=servicepasswd,
