@@ -22,7 +22,8 @@ def get_detail_tabs(handler, profile):
         template.envs = envs
 
     tabs.insert(1, ('Images', 'images', dict(template='resourcehandlers/tab-templates.html', context={
-        'templates': templates, 'handler_can_discover_templates': True
+        'templates': templates, 'handler_can_discover_templates': True,
+        'show_total_disk_size_column': hasattr(RhevOSBuildAttribute, 'total_disk_size')
     })))
     tabs.insert(2, ('Networks', 'networks', dict(template='resourcehandlers/tab-networks.html', context={
         'networks': handler.networks.all().values(*NETWORK_TABLE_VALUES)
