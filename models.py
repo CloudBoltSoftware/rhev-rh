@@ -505,7 +505,9 @@ class RhevResourceHandler(ResourceHandler):
         """
         osbuild_attribute, created = RhevOSBuildAttribute.objects.get_or_create(
             os_build=os_build, template_name=template_name,
-            uuid=kwargs.get("uuid", ""))
+            uuid=kwargs.get("uuid", ""),
+            resourcehandler=self,
+        )
         self.osbuildattribute_set.add(osbuild_attribute)
         return created
 
